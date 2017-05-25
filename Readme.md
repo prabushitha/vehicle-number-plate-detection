@@ -1,6 +1,6 @@
 RUN
 ----------------------------
-python3 main.py input/test_1.jpg
+python3 main.py inputs/test_1.jpg
 
 Introduction
 ----------------------------
