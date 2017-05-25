@@ -1,3 +1,7 @@
+RUN
+----------------------------
+python3 main.py input/test_1.jpg
+
 Introduction
 ----------------------------
 Front number plate detection is used in
