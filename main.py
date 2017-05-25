@@ -1,3 +1,4 @@
+import sys
 import cv2
 import numpy as np
 import number_plate as nplate
@@ -33,22 +34,22 @@ def clean_image(img):
         , interpolation=cv2.INTER_CUBIC)
 
     resized_img = cv2.GaussianBlur(resized_img,(5,5),0)
-    cv2.imwrite('licence_plate_large.png', resized_img)
+    cv2.imwrite('outputs/1_licence_plate_large.png', resized_img)
 
     equalized_img = cv2.equalizeHist(resized_img)
-    cv2.imwrite('licence_plate_equ.png', equalized_img)
+    cv2.imwrite('outputs/2_licence_plate_equ.png', equalized_img)
 
 
     reduced = cv2.cvtColor(reduce_colors(cv2.cvtColor(equalized_img, cv2.COLOR_GRAY2BGR), 8), cv2.COLOR_BGR2GRAY)
-    cv2.imwrite('licence_plate_red.png', reduced)
+    cv2.imwrite('outputs/3_licence_plate_red.png', reduced)
 
 
     ret, mask = cv2.threshold(reduced, 64, 255, cv2.THRESH_BINARY)
-    cv2.imwrite('licence_plate_mask.png', mask) 
+    cv2.imwrite('outputs/4_licence_plate_mask.png', mask) 
 
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
     mask = cv2.erode(mask, kernel, iterations = 1)
-    cv2.imwrite('licence_plate_mask2.png', mask)
+    cv2.imwrite('outputs/5_licence_plate_mask2.png', mask)
 
     return mask
 
@@ -79,12 +80,15 @@ def extract_characters(img):
         if (area > 5000) and (area < 100000):
             large_count = large_count+1
     min_ar = 1000
-    if (large_count > 4) and (large_count < 9):
+    if large_count > 5:
         min_ar = 5000
-    elif (medium_count > 4) and (medium_count < 9):
+    elif medium_count > 5:
         min_ar = 2500
-    else:
+    elif small_count > 5:
         min_ar = 1000
+    else:
+        #no number plate found
+        return -1, -1
     #print(areas)
         
     for contour in contours:
@@ -96,7 +100,7 @@ def extract_characters(img):
             bounding_boxes.append((center, (x,y,w,h)))
             cv2.rectangle(char_mask,(x,y),(x+w,y+h),255,-1)
 
-    cv2.imwrite('licence_plate_mask3.png', char_mask)
+    cv2.imwrite('outputs/licence_plate_mask3.png', char_mask)
 
     clean = cv2.bitwise_not(cv2.bitwise_and(char_mask, char_mask, mask = bw_image))
 
@@ -137,13 +141,17 @@ def getPlateNumber(img):
 
     img = clean_image(img)
     clean_img, chars = extract_characters(img)
+    
+    #if not match found
+    if type(clean_img) is int and clean_img==-1:
+        return -1
 
     output_img = highlight_characters(clean_img, chars)
-    cv2.imwrite('licence_plate_out.png', output_img)
+    cv2.imwrite('outputs/licence_plate_out.png', output_img)
 
 
-    samples = np.loadtxt('char_samples.data',np.float32)
-    responses = np.loadtxt('char_responses.data',np.float32)
+    samples = np.loadtxt('data_generation/char_samples.data',np.float32)
+    responses = np.loadtxt('data_generation/char_responses.data',np.float32)
     responses = responses.reshape((responses.size,1))
 
 
@@ -161,17 +169,26 @@ def getPlateNumber(img):
     return plate_chars
 
 #img = cv2.imread("test_img1.png")
+if len(sys.argv)==2:
+    path = sys.argv[1]
+else:
+    path = "inputs/test_1.jpg"
+try:
+    img = cv2.imread(path)
+    cv2.namedWindow("Original Image",cv2.WINDOW_NORMAL)
+    cv2.imshow("Original Image",img)
 
-img = cv2.imread("test_1.jpg")
-cv2.namedWindow("Original Image",cv2.WINDOW_NORMAL)
-cv2.imshow("Original Image",img)
+    final = nplate.extract_number_plate(img)
 
-final = nplate.extract_number_plate(img)
+    cv2.namedWindow("Final_image",cv2.WINDOW_NORMAL)
+    cv2.imshow("Final_image",final)
 
-cv2.namedWindow("Final_image",cv2.WINDOW_NORMAL)
-cv2.imshow("Final_image",final)
+    numberplate = getPlateNumber(final)
+    if not(type(numberplate) is int) and not(numberplate==-1):
+        print("Licence plate: %s\n" % numberplate)
+    else:
+        print("Number Plate Characters couldn't identified properly")
 
-
-print("Licence plate: %s\n" % getPlateNumber(final))
-
-cv2.waitKey() # Wait for a keystroke from the user
+    cv2.waitKey() # Wait for a keystroke from the user
+except:
+    print("Image is not valid")
