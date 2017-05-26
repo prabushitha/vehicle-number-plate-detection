@@ -184,8 +184,22 @@ try:
     cv2.imshow("Final_image",final)
 
     numberplate = getPlateNumber(final)
+    letters = list('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+    #print(letters)
     if not(type(numberplate) is int) and not(numberplate==-1):
-        print("Licence plate: %s\n" % numberplate)
+        final_plate = ""
+        
+        for x in range(len(numberplate)):
+            #print(x)
+            #print(letters.index(str(numberplate[x])))
+            if x==3 and (numberplate[x] in letters):
+                pass
+            elif x==2 and (numberplate[x] in letters) and not(numberplate[0] in letters[0:3]):
+                pass
+            else:
+                final_plate = final_plate+numberplate[x]
+            
+        print("Licence plate: %s\n" % final_plate)
     else:
         print("Number Plate Characters couldn't identified properly")
 

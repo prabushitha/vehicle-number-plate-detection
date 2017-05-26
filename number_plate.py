@@ -26,23 +26,27 @@ def extract_number_plate(img):
     # Morphological opening with a rectangular structure element
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(5,5))
     morph_image = cv2.morphologyEx(equal_histogram,cv2.MORPH_OPEN,kernel,iterations=15)
+    #cv2.imwrite('outputs/10_morph_image.png', morph_image)
 
     # Image subtraction(Subtracting the Morphed image from the histogram equalised Image)
     sub_morp_image = cv2.subtract(equal_histogram,morph_image)
+    #cv2.imwrite('outputs/11_sub_morp_image.png', sub_morp_image)
 
     # Thresholding the image
     ret,thresh_image = cv2.threshold(sub_morp_image,0,255,cv2.THRESH_OTSU)
-
+    #cv2.imwrite('outputs/12_thresh_image.png', thresh_image)
     # Applying Canny Edge detection
     canny_image = cv2.Canny(thresh_image,250,255)
 
     canny_image = cv2.convertScaleAbs(canny_image)
+    #cv2.imwrite('outputs/13_canny_image.png', canny_image)
 
 
     # dilation to strengthen the edges
     kernel = np.ones((3,3), np.uint8)
     # Creating the kernel for dilation
     dilated_image = cv2.dilate(canny_image,kernel,iterations=1)
+    #cv2.imwrite('outputs/14_dilated_image.png', dilated_image)
 
     # Finding Contours in the image based on edges
     new,contours, hierarchy = cv2.findContours(dilated_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
